@@ -229,7 +229,6 @@ async function onSubmitProfil(event) {
     languages,
     projects,
     availability,
-    verified,
   };
 
   try {
