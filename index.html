@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carte des Talents</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    (function () {
+      var target = 'http://10.0.1.253:3000/CartedesTalents/';
+      if (window.location.href.indexOf(target) === -1) {
+        window.location.href = target;
+      }
+    })();
+  </script>
+</head>
+<body>
+  <header class="header">
+    <h1>Carte des Talents</h1>
+    <p class="subtitle">Plateforme des talents du défi national</p>
+    <nav class="nav">
+      <button data-section="profil">Profil</button>
+      <button data-section="carte">Carte des talents</button>
+      <button data-section="collaborateur">Trouver un collaborateur</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Section Profil -->
+    <section id="section-profil" class="section active">
+      <h2>Mon profil</h2>
+      <div class="grid-2">
+        <form id="profil-form" class="card">
+          <h3>Éditer mon profil</h3>
+
+          <label>Nom complet
+            <input type="text" id="fullName" placeholder="Nom Prénom" />
+          </label>
+
+          <label>Établissement / Organisation
+            <input type="text" id="organization" placeholder="Lycée, université, entreprise..." />
+          </label>
+
+          <label>Compétences (séparées par des virgules)
+            <input type="text" id="skills" placeholder="ex : JavaScript, Design, Communication" />
+          </label>
+
+          <label>Passions / Centres d'intérêt
+            <input type="text" id="passions" placeholder="ex : Musique, Robotique, Sport" />
+          </label>
+
+          <label>Langues parlées
+            <input type="text" id="languages" placeholder="ex : Français (C2), Anglais (B2)" />
+          </label>
+
+          <label>Projets réalisés
+            <textarea id="projects" rows="3" placeholder="Liste courte de projets avec une phrase chacun"></textarea>
+          </label>
+
+          <label>Disponibilité
+            <select id="availability">
+              <option value="">-- Choisir --</option>
+              <option value="projets">Disponible pour des projets</option>
+              <option value="aide">Disponible pour aider ponctuellement</option>
+              <option value="mentorat">Disponible pour du mentorat</option>
+            </select>
+          </label>
+
+          <label class="checkbox">
+            <input type="checkbox" id="talentVerified" />
+            <span>Talent Verified (validé par un responsable)</span>
+          </label>
+
+          <button type="submit" class="primary">Enregistrer le profil</button>
+        </form>
+
+        <div class="card" id="profil-preview">
+          <h3>Prévisualisation du profil</h3>
+          <p class="profil-name" id="preview-name">Nom Prénom</p>
+          <p class="profil-org" id="preview-org">Établissement / Organisation</p>
+          <p class="badge" id="preview-badge" hidden>Talent Verified</p>
+
+          <div class="profil-section">
+            <h4>Compétences</h4>
+            <div id="preview-skills" class="tags"></div>
+          </div>
+
+          <div class="profil-section">
+            <h4>Passions</h4>
+            <div id="preview-passions" class="tags"></div>
+          </div>
+
+          <div class="profil-section">
+            <h4>Langues</h4>
+            <div id="preview-languages" class="tags"></div>
+          </div>
+
+          <div class="profil-section">
+            <h4>Projets réalisés</h4>
+            <ul id="preview-projects"></ul>
+          </div>
+
+          <div class="profil-section">
+            <h4>Disponibilité</h4>
+            <p id="preview-availability" class="muted">Non renseigné</p>
+          </div>
+          <button id="download-pdf" class="pdf-button">Télécharger la carte des talents en PDF</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section Carte des talents -->
+    <section id="section-carte" class="section">
+      <h2>Carte des talents (nuage de compétences)</h2>
+      <p class="muted">Basé sur les compétences de tous les profils saisis localement.</p>
+      <div id="skills-cloud" class="skills-cloud card"></div>
+      <div id="skills-cloud-selection" class="card" hidden>
+        <h3>Talents pour la compétence : <span id="selected-skill"></span></h3>
+        <ul id="selected-skill-talents"></ul>
+      </div>
+    </section>
+
+    <!-- Section Trouver un collaborateur -->
+    <section id="section-collaborateur" class="section">
+      <h2>Trouver un collaborateur</h2>
+      <div class="grid-2">
+        <form id="search-form" class="card">
+          <h3>Recherche avancée</h3>
+          <label>Compétence recherchée
+            <input type="text" id="search-skill" placeholder="ex : Python" />
+          </label>
+
+          <label>Langue
+            <input type="text" id="search-language" placeholder="ex : Anglais" />
+          </label>
+
+          <label>Disponibilité
+            <select id="search-availability">
+              <option value="">Peu importe</option>
+              <option value="projets">Projets</option>
+              <option value="aide">Aide ponctuelle</option>
+              <option value="mentorat">Mentorat</option>
+            </select>
+          </label>
+
+          <label class="checkbox">
+            <input type="checkbox" id="search-verified-only" />
+            <span>Seulement les talents vérifiés</span>
+          </label>
+
+          <button type="submit" class="primary">Rechercher</button>
+        </form>
+
+        <div id="search-results" class="card">
+          <h3>Résultats</h3>
+          <ul id="search-results-list"></ul>
+          <p id="search-empty" class="muted">Aucun résultat pour le moment. Enregistre d'abord un ou plusieurs profils.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Intégration possible au défi national : filtrer par établissement, région ou promotion (à ajouter côté serveur ou base de données).</p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
