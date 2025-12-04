@@ -6,7 +6,7 @@ let talents = [];
 
 async function loadTalents() {
   try {
-    const response = await fetch('http://localhost:5000/api/talents');
+    const response = await fetch('http://localhost:5001/api/talents');
     if (!response.ok) throw new Error('Erreur de chargement');
     const data = await response.json();
     talents = Array.isArray(data) ? data : [];
@@ -232,7 +232,7 @@ async function onSubmitProfil(event) {
   };
 
   try {
-    const response = await fetch('http://localhost:5000/api/talents', {
+    const response = await fetch('http://localhost:5001/api/talents', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
