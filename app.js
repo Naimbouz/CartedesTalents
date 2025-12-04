@@ -89,6 +89,77 @@ function updatePreviewFromForm() {
   availabilityEl.textContent = availabilityMap[availability] ?? 'Non renseigné';
 }
 
+function downloadTalentCardPdf() {
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert('La génération de PDF n\'est pas disponible (jsPDF non chargé).');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const name = document.getElementById('preview-name').textContent || '';
+  const org = document.getElementById('preview-org').textContent || '';
+  const isVerified = !document.getElementById('preview-badge').hidden;
+
+  const skills = Array.from(document.querySelectorAll('#preview-skills .tag')).map((el) => el.textContent);
+  const passions = Array.from(document.querySelectorAll('#preview-passions .tag')).map((el) => el.textContent);
+  const languages = Array.from(document.querySelectorAll('#preview-languages .tag')).map((el) => el.textContent);
+  const projects = Array.from(document.querySelectorAll('#preview-projects li')).map((el) => `• ${el.textContent}`);
+  const availability = document.getElementById('preview-availability').textContent || '';
+
+  let y = 20;
+  doc.setFontSize(18);
+  doc.text('Carte des talents', 20, y);
+  y += 8;
+
+  doc.setFontSize(12);
+  doc.text(name, 20, y);
+  y += 6;
+  if (org) {
+    doc.text(org, 20, y);
+    y += 6;
+  }
+  if (isVerified) {
+    doc.setTextColor(34, 197, 94);
+    doc.text('[Talent Verified]', 20, y);
+    doc.setTextColor(0, 0, 0);
+    y += 8;
+  } else {
+    y += 4;
+  }
+
+  const addSection = (title, linesArray) => {
+    if (!linesArray || linesArray.length === 0) return;
+    doc.setFontSize(13);
+    doc.text(title, 20, y);
+    y += 6;
+    doc.setFontSize(11);
+
+    const text = Array.isArray(linesArray) ? linesArray.join(', ') : String(linesArray);
+    const wrapped = doc.splitTextToSize(text, 170);
+    wrapped.forEach((line) => {
+      if (y > 280) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(line, 22, y);
+      y += 5;
+    });
+    y += 2;
+  };
+
+  addSection('Compétences', skills);
+  addSection('Passions / centres d\'intérêt', passions);
+  addSection('Langues', languages);
+  addSection('Projets réalisés', projects);
+  addSection('Disponibilité', [availability]);
+
+  const safeName = name || 'carte_talent';
+  const filename = `Carte_de_talents_${safeName.replace(/[^a-z0-9\-_]+/gi, '_')}.pdf`;
+  doc.save(filename);
+}
+
 function onSubmitProfil(event) {
   event.preventDefault();
 
@@ -265,6 +336,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const profilForm = document.getElementById('profil-form');
   profilForm.addEventListener('submit', onSubmitProfil);
+
+  const pdfBtn = document.getElementById('download-pdf');
+  if (pdfBtn) {
+    pdfBtn.addEventListener('click', downloadTalentCardPdf);
+  }
 
   const searchForm = document.getElementById('search-form');
   searchForm.addEventListener('submit', onSearch);
