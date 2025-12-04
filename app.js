@@ -1,20 +1,22 @@
 // Stockage local des talents (localStorage pour garder les données sur ce navigateur)
 const STORAGE_KEY = 'carte_des_talents.profils';
 
-/** @type {Array<{id:string, fullName:string, organization:string, skills:string[], passions:string[], languages:string[], projects:string[], availability:string, verified:boolean}>} */
+/** @type {Array<{id?:string, _id?:string, fullName:string, organization:string, skills:string[], passions:string[], languages:string[], projects:string[], availability:string, verified:boolean}>} */
 let talents = [];
 
-function loadTalents() {
+async function loadTalents() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    talents = raw ? JSON.parse(raw) : [];
+    const response = await fetch('http://localhost:5000/api/talents');
+    if (!response.ok) throw new Error('Erreur de chargement');
+    const data = await response.json();
+    talents = Array.isArray(data) ? data : [];
   } catch {
     talents = [];
   }
 }
 
 function saveTalents() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(talents));
+  // Stockage local désactivé : la source de vérité est désormais MongoDB via l'API.
 }
 
 function splitToList(value) {
@@ -198,7 +200,7 @@ function downloadTalentCardPdf() {
   doc.save(filename);
 }
 
-function onSubmitProfil(event) {
+async function onSubmitProfil(event) {
   event.preventDefault();
 
   const fullName = document.getElementById('fullName').value.trim();
@@ -220,7 +222,6 @@ function onSubmitProfil(event) {
   }
 
   const profile = {
-    id: Date.now().toString(),
     fullName,
     organization,
     skills,
@@ -231,10 +232,26 @@ function onSubmitProfil(event) {
     verified,
   };
 
-  talents.push(profile);
-  saveTalents();
-  buildSkillsCloud();
-  alert('Profil enregistré localement sur ce navigateur.');
+  try {
+    const response = await fetch('http://localhost:5000/api/talents', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(profile),
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur HTTP');
+    }
+
+    const created = await response.json();
+    talents.push(created);
+    buildSkillsCloud();
+    alert('Profil enregistré dans la base de données.');
+  } catch (e) {
+    alert("Erreur lors de l'enregistrement du profil. Vérifiez que l'API est démarrée.");
+  }
 }
 
 function buildSkillsCloud() {
@@ -367,8 +384,8 @@ function setupLivePreview() {
   updatePreviewFromForm();
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  loadTalents();
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadTalents();
   setupNavigation();
   setupLivePreview();
 
