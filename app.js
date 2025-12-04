@@ -91,12 +91,16 @@ function updatePreviewFromForm() {
 
 function downloadTalentCardPdf() {
   if (!window.jspdf || !window.jspdf.jsPDF) {
-    alert('La génération de PDF n\'est pas disponible (jsPDF non chargé).');
+    alert("La génération de PDF n'est pas disponible (jsPDF non chargé).");
     return;
   }
 
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const marginLeft = 20;
+  const marginRight = 190; // 210 - 20
+  let y = 20;
 
   const name = document.getElementById('preview-name').textContent || '';
   const org = document.getElementById('preview-org').textContent || '';
@@ -108,22 +112,35 @@ function downloadTalentCardPdf() {
   const projects = Array.from(document.querySelectorAll('#preview-projects li')).map((el) => `• ${el.textContent}`);
   const availability = document.getElementById('preview-availability').textContent || '';
 
-  let y = 20;
-  doc.setFontSize(18);
-  doc.text('Carte des talents', 20, y);
+  // Titre
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(40, 40, 40);
+  doc.text('CARTE DES TALENTS', marginLeft, y);
+  y += 4;
+  doc.setDrawColor(79, 70, 229);
+  doc.setLineWidth(0.7);
+  doc.line(marginLeft, y, marginRight, y);
   y += 8;
 
+  // Bloc identité
   doc.setFontSize(12);
-  doc.text(name, 20, y);
+  doc.setTextColor(60, 60, 60);
+  doc.text('Identité', marginLeft, y);
+  y += 6;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.text(name || 'Nom non renseigné', marginLeft, y);
   y += 6;
   if (org) {
-    doc.text(org, 20, y);
+    doc.text(org, marginLeft, y);
     y += 6;
   }
   if (isVerified) {
     doc.setTextColor(34, 197, 94);
-    doc.text('[Talent Verified]', 20, y);
-    doc.setTextColor(0, 0, 0);
+    doc.text('[Talent Verified]', marginLeft, y);
+    doc.setTextColor(60, 60, 60);
     y += 8;
   } else {
     y += 4;
@@ -131,29 +148,50 @@ function downloadTalentCardPdf() {
 
   const addSection = (title, linesArray) => {
     if (!linesArray || linesArray.length === 0) return;
-    doc.setFontSize(13);
-    doc.text(title, 20, y);
-    y += 6;
-    doc.setFontSize(11);
+
+    if (y > 260) {
+      doc.addPage();
+      y = 20;
+    }
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(55, 65, 81);
+    doc.text(title.toUpperCase(), marginLeft, y);
+    y += 4;
+    doc.setDrawColor(229, 231, 235);
+    doc.setLineWidth(0.4);
+    doc.line(marginLeft, y, marginRight, y);
+    y += 5;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10.5);
+    doc.setTextColor(55, 65, 81);
 
     const text = Array.isArray(linesArray) ? linesArray.join(', ') : String(linesArray);
-    const wrapped = doc.splitTextToSize(text, 170);
+    const wrapped = doc.splitTextToSize(text, marginRight - marginLeft);
     wrapped.forEach((line) => {
       if (y > 280) {
         doc.addPage();
         y = 20;
       }
-      doc.text(line, 22, y);
+      doc.text(line, marginLeft + 2, y);
       y += 5;
     });
-    y += 2;
+    y += 3;
   };
 
   addSection('Compétences', skills);
-  addSection('Passions / centres d\'intérêt', passions);
+  addSection("Passions / centres d'intérêt", passions);
   addSection('Langues', languages);
   addSection('Projets réalisés', projects);
   addSection('Disponibilité', [availability]);
+
+  // Pied de page
+  const footerY = 290;
+  doc.setFontSize(8.5);
+  doc.setTextColor(148, 163, 184);
+  doc.text('Généré depuis la plateforme "Carte des Talents" – Défi national', marginLeft, footerY);
 
   const safeName = name || 'carte_talent';
   const filename = `Carte_de_talents_${safeName.replace(/[^a-z0-9\-_]+/gi, '_')}.pdf`;
