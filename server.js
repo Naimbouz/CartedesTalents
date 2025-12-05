@@ -27,8 +27,18 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => {
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`Serveur API démarré sur le port ${PORT}`);
+    });
+
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`\n❌ Erreur: Le port ${PORT} est déjà utilisé.`);
+        console.error(`💡 Solution: Arrêtez le processus utilisant le port ${PORT} ou changez le port dans le fichier .env\n`);
+        process.exit(1);
+      } else {
+        throw err;
+      }
     });
   })
   .catch((err) => {
