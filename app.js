@@ -4,9 +4,21 @@ const STORAGE_KEY = 'carte_des_talents.profils';
 /** @type {Array<{id?:string, _id?:string, fullName:string, organization:string, skills:string[], passions:string[], languages:string[], projects:string[], availability:string, verified:boolean}>} */
 let talents = [];
 
+// Determine API base URL based on current host
+const getApiBaseUrl = () => {
+  const hostname = window.location.hostname;
+  // If accessing from network IP, use that IP for API, otherwise use localhost
+  if (hostname === '10.0.1.253' || hostname !== 'localhost' && hostname !== '127.0.0.1') {
+    return `http://${hostname}:5000`;
+  }
+  return 'http://localhost:5000';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
 async function loadTalents() {
   try {
-    const response = await fetch('http://localhost:5000/api/talents');
+    const response = await fetch(`${API_BASE_URL}/api/talents`);
     if (!response.ok) throw new Error('Erreur de chargement');
     const data = await response.json();
     talents = Array.isArray(data) ? data : [];
@@ -232,7 +244,7 @@ async function onSubmitProfil(event) {
   };
 
   try {
-    const response = await fetch('http://localhost:5000/api/talents', {
+    const response = await fetch(`${API_BASE_URL}/api/talents`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

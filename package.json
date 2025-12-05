@@ -5,12 +5,14 @@
   "type": "commonjs",
   "scripts": {
     "kill-port": "node kill-port.js",
+    "kill-ports": "node kill-ports.js",
     "prestart": "node kill-port.js",
     "start": "node server.js",
     "predev": "node kill-port.js",
     "dev": "nodemon server.js",
     "frontend": "node frontend-server.js",
-    "start:all": "concurrently \"npm start\" \"npm run frontend\""
+    "prestart:all": "node kill-ports.js",
+    "start:all": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm start\" \"npm run frontend\""
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -19,6 +21,7 @@
     "mongoose": "^7.8.0"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "nodemon": "^3.1.0"
   }
 }
