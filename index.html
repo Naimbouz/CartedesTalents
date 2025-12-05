@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Carte des Talents</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="/CartedesTalents/styles.css" />
   <!-- Redirect script disabled for local development -->
   <!--
   <script>
@@ -19,12 +19,22 @@
 </head>
 <body>
   <header class="header">
-    <h1>Carte des Talents</h1>
-    <p class="subtitle">Plateforme des talents du défi national</p>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1>Carte des Talents</h1>
+        <p class="subtitle">Plateforme des talents du défi national</p>
+      </div>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <span id="user-info" class="user-info" style="color: var(--text-muted); font-size: 0.9rem;"></span>
+        <button id="logout-btn-header" class="secondary" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">Déconnexion</button>
+      </div>
+    </div>
     <nav class="nav">
       <button data-section="profil">Profil</button>
       <button data-section="carte">Carte des talents</button>
       <button data-section="collaborateur">Trouver un collaborateur</button>
+      <button data-section="admin-dashboard" class="nav-admin" id="admin-nav-btn" style="display: none;">⚙️ Dashboard Admin</button>
+      <button data-section="admin-users" class="nav-admin" id="admin-users-nav-btn" style="display: none;">👥 Gestion Utilisateurs</button>
     </nav>
   </header>
 
@@ -69,11 +79,6 @@
             </select>
           </label>
 
-          <label class="checkbox">
-            <input type="checkbox" id="talentVerified" />
-            <span>Talent Verified (validé par un responsable)</span>
-          </label>
-
           <button type="submit" class="primary">Enregistrer le profil</button>
         </form>
 
@@ -81,7 +86,7 @@
           <h3>Prévisualisation du profil</h3>
           <p class="profil-name" id="preview-name">Nom Prénom</p>
           <p class="profil-org" id="preview-org">Établissement / Organisation</p>
-          <p class="badge" id="preview-badge" hidden>Talent Verified</p>
+          <p class="badge badge-unverified" id="preview-badge">✗ Non vérifié</p>
 
           <div class="profil-section">
             <h4>Compétences</h4>
@@ -161,6 +166,112 @@
         </div>
       </div>
     </section>
+
+    <!-- Section Dashboard Admin -->
+    <section id="section-admin-dashboard" class="section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>Dashboard Administrateur</h2>
+        <button id="refresh-dashboard" class="secondary">🔄 Actualiser</button>
+      </div>
+
+      <!-- Statistiques simplifiées -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-content">
+            <div class="stat-value" id="stat-total-talents">0</div>
+            <div class="stat-label">Total Profils</div>
+          </div>
+        </div>
+        <div class="stat-card verified">
+          <div class="stat-icon">✅</div>
+          <div class="stat-content">
+            <div class="stat-value" id="stat-verified-talents">0</div>
+            <div class="stat-label">Vérifiés</div>
+          </div>
+        </div>
+        <div class="stat-card unverified">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-content">
+            <div class="stat-value" id="stat-unverified-talents">0</div>
+            <div class="stat-label">Non Vérifiés</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recherche et filtres -->
+      <div class="dashboard-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <h3>Tous les Profils</h3>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <input type="text" id="admin-search" placeholder="Rechercher un profil..." class="admin-search-input" />
+            <select id="admin-filter" class="admin-filter-select">
+              <option value="all">Tous</option>
+              <option value="verified">Vérifiés uniquement</option>
+              <option value="unverified">Non vérifiés uniquement</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Liste des profils -->
+        <div id="admin-profiles-list" class="admin-profiles-container">
+          <p class="muted" style="text-align: center; padding: 2rem;">Chargement des profils...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section Gestion Utilisateurs Admin -->
+    <section id="section-admin-users" class="section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>Gestion des Utilisateurs</h2>
+        <button id="refresh-users" class="secondary">🔄 Actualiser</button>
+      </div>
+
+      <!-- Création d'utilisateurs -->
+      <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); margin-bottom: 2rem;">
+        <!-- Création d'admin -->
+        <div class="dashboard-card">
+          <h3>Créer un Administrateur</h3>
+          <form id="create-admin-form">
+            <div class="form-group">
+              <label for="new-admin-username">Nom d'utilisateur</label>
+              <input type="text" id="new-admin-username" placeholder="nouvel_admin" required />
+            </div>
+            <div class="form-group">
+              <label for="new-admin-password">Mot de passe</label>
+              <input type="password" id="new-admin-password" placeholder="••••••••" required minlength="3" />
+            </div>
+            <button type="submit" class="primary" style="width: 100%; margin-top: 0.5rem;">Créer l'administrateur</button>
+          </form>
+          <div id="create-admin-message" style="margin-top: 1rem;"></div>
+        </div>
+
+        <!-- Création d'utilisateur -->
+        <div class="dashboard-card">
+          <h3>Créer un Utilisateur</h3>
+          <form id="create-user-form">
+            <div class="form-group">
+              <label for="new-user-username">Nom d'utilisateur</label>
+              <input type="text" id="new-user-username" placeholder="nouvel_utilisateur" required />
+            </div>
+            <div class="form-group">
+              <label for="new-user-password">Mot de passe</label>
+              <input type="password" id="new-user-password" placeholder="••••••••" required minlength="3" />
+            </div>
+            <button type="submit" class="primary" style="width: 100%; margin-top: 0.5rem;">Créer l'utilisateur</button>
+          </form>
+          <div id="create-user-message" style="margin-top: 1rem;"></div>
+        </div>
+      </div>
+
+      <!-- Liste des utilisateurs -->
+      <div class="dashboard-card">
+        <h3>Utilisateurs</h3>
+        <div id="admin-users-list" class="users-list">
+          <p class="muted">Chargement des utilisateurs...</p>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="footer">
@@ -168,6 +279,6 @@
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="app.js"></script>
+  <script src="/CartedesTalents/app.js"></script>
 </body>
 </html>
