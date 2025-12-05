@@ -4,8 +4,13 @@
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
+    "kill-port": "node kill-port.js",
+    "prestart": "node kill-port.js",
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "predev": "node kill-port.js",
+    "dev": "nodemon server.js",
+    "frontend": "node frontend-server.js",
+    "start:all": "concurrently \"npm start\" \"npm run frontend\""
   },
   "dependencies": {
     "cors": "^2.8.5",
