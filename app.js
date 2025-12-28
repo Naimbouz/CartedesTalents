@@ -682,7 +682,7 @@ if (btnOpenNotebook) {
     // Open Jupyter Notebook in a new tab
     // Assuming default port 8888 and path relative to where it was started (usually root)
     // We point to the specific file
-    window.open('http://localhost:8888/notebooks/ml_service/admin_dashboard.ipynb', '_blank');
+    window.open('http://localhost:8888/notebooks/admin_dashboard.ipynb', '_blank');
   });
 }
 

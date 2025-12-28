@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,6 +18,7 @@
   </script>
   -->
 </head>
+
 <body>
   <header class="header">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
@@ -26,15 +28,19 @@
       </div>
       <div style="display: flex; align-items: center; gap: 1rem;">
         <span id="user-info" class="user-info" style="color: var(--text-muted); font-size: 0.9rem;"></span>
-        <button id="logout-btn-header" class="secondary" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">Déconnexion</button>
+        <button id="logout-btn-header" class="secondary"
+          style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">Déconnexion</button>
       </div>
     </div>
     <nav class="nav">
       <button data-section="profil">Profil</button>
       <button data-section="carte">Carte des talents</button>
       <button data-section="collaborateur">Trouver un collaborateur</button>
-      <button data-section="admin-dashboard" class="nav-admin" id="admin-nav-btn" style="display: none;">⚙️ Dashboard Admin</button>
-      <button data-section="admin-users" class="nav-admin" id="admin-users-nav-btn" style="display: none;">👥 Gestion Utilisateurs</button>
+      <button data-section="user-score" id="nav-score-btn">🔮 Mon Score IA</button>
+      <button data-section="admin-dashboard" class="nav-admin" id="admin-nav-btn" style="display: none;">⚙️ Dashboard
+        Admin</button>
+      <button data-section="admin-users" class="nav-admin" id="admin-users-nav-btn" style="display: none;">👥 Gestion
+        Utilisateurs</button>
     </nav>
   </header>
 
@@ -162,7 +168,54 @@
         <div id="search-results" class="card">
           <h3>Résultats</h3>
           <ul id="search-results-list"></ul>
-          <p id="search-empty" class="muted">Aucun résultat pour le moment. Enregistre d'abord un ou plusieurs profils.</p>
+          <p id="search-empty" class="muted">Aucun résultat pour le moment. Enregistre d'abord un ou plusieurs profils.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    </section>
+
+    <!-- Section Score IA User -->
+    <section id="section-user-score" class="section">
+      <h2>Mon Score de Validité IA</h2>
+      <p class="muted">L'Intelligence Artificielle analyse votre profil pour estimer sa qualité.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Calculer mon score</h3>
+          <p>Assurez-vous d'avoir bien rempli le formulaire dans l'onglet "Profil".</p>
+          <button id="btn-calculate-user-score" class="primary" style="margin-top: 1rem;">🚀 Lancer l'analyse</button>
+        </div>
+
+        <div class="card" id="user-score-result" hidden>
+          <div class="score-circle-container" style="text-align: center; display: flex; justify-content: center;">
+            <div class="score-circle" id="user-score-circle">
+              <span id="user-score-value">0%</span>
+              <small>Confiance</small>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem;">
+            <h4 id="user-score-verdict" style="text-align: center; font-size: 1.3rem; margin: 0.5rem 0;">Verdict</h4>
+            <div class="dashboard-grid"
+              style="grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 1rem; text-align: center; margin-bottom: 0;">
+              <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 8px;">
+                <div id="feat-skills-count" style="font-weight: bold; font-size: 1.2rem;">0</div>
+                <small class="muted">Skills</small>
+              </div>
+              <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 8px;">
+                <div id="feat-projects-count" style="font-weight: bold; font-size: 1.2rem;">0</div>
+                <small class="muted">Projets</small>
+              </div>
+              <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 8px;">
+                <div id="feat-langs-count" style="font-weight: bold; font-size: 1.2rem;">0</div>
+                <small class="muted">Langues</small>
+              </div>
+            </div>
+
+            <div id="user-score-keywords" style="margin-top: 1rem; text-align: center;" hidden></div>
+          </div>
         </div>
       </div>
     </section>
@@ -197,11 +250,85 @@
             <div class="stat-label">Non Vérifiés</div>
           </div>
         </div>
+
+        <!-- ML Model Performance -->
+        <div class="dashboard-card" style="margin-bottom: 2rem;">
+          <h3>🧠 Performance du Modèle IA (Matrice de Confusion)</h3>
+          <p class="muted">Évaluation de la précision du modèle sur les données de test.</p>
+
+          <div id="ml-metrics-container"
+            style="margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap; align-items: center;">
+            <div class="matrix-container"
+              style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px;">
+              <table id="confusion-matrix-table" style="text-align: center; border-collapse: collapse;">
+                <tr>
+                  <td></td>
+                  <td style="font-weight: bold; padding: 5px;">Prédit: Non</td>
+                  <td style="font-weight: bold; padding: 5px;">Prédit: Oui</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: bold; padding: 5px;">Réel: Non</td>
+                  <td id="cm-tn" style="background: rgba(255,255,255,0.05); padding: 10px; border: 1px solid #444;">-
+                  </td>
+                  <td id="cm-fp" style="background: rgba(255,255,255,0.05); padding: 10px; border: 1px solid #444;">-
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-weight: bold; padding: 5px;">Réel: Oui</td>
+                  <td id="cm-fn" style="background: rgba(255,255,255,0.05); padding: 10px; border: 1px solid #444;">-
+                  </td>
+                  <td id="cm-tp" style="background: rgba(255,255,255,0.05); padding: 10px; border: 1px solid #444;">-
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="metrics-summary">
+              <div style="margin-bottom: 0.5rem;">
+                <strong>Précision Globale : </strong>
+                <span id="model-accuracy" style="font-size: 1.2rem; font-weight: bold;">-</span>
+              </div>
+              <div class="muted">
+                <small>Basé sur <span id="model-samples">-</span> échantillons de test.</small>
+                <br>
+                <small>Vrais Négatifs (TN): Profils incomplets correctement détectés.</small><br>
+                <small>Vrais Positifs (TP): Profils complets correctement détectés.</small>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-left: auto;">
+              <button id="btn-view-matrix" class="secondary">👀 Voir Matrice (Graphique)</button>
+              <button id="btn-open-notebook" class="secondary"
+                title="Assurez-vous de lancer 'jupyter notebook' dans le terminal">📓 Ouvrir Notebook</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- Upload Global Job Reference -->
+      <div class="dashboard-card" style="margin-bottom: 2rem;">
+        <h3>📄 Fiche de Poste de Référence (Défi)</h3>
+        <p class="muted">Définissez ici l'offre d'emploi ou le défi qui servira de base pour calculer le score de
+          compatibilité des utilisateurs.</p>
+
+        <form id="global-reference-form" style="margin-top: 1rem;">
+          <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <label for="global-job-pdf" class="secondary"
+              style="margin: 0; display: inline-flex; align-items: center; cursor: pointer;">
+              <span style="font-size: 1.2rem; margin-right: 0.5rem;">📂</span> Choisir PDF
+              <input type="file" id="global-job-pdf" accept=".pdf" style="display: none;" />
+            </label>
+            <span id="global-file-name" class="muted">Aucun fichier choisi</span>
+            <button type="submit" class="primary" style="margin: 0;">Mettre à jour la Référence</button>
+          </div>
+        </form>
       </div>
 
       <!-- Recherche et filtres -->
       <div class="dashboard-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
           <h3>Tous les Profils</h3>
           <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <input type="text" id="admin-search" placeholder="Rechercher un profil..." class="admin-search-input" />
@@ -212,7 +339,7 @@
             </select>
           </div>
         </div>
-        
+
         <!-- Liste des profils -->
         <div id="admin-profiles-list" class="admin-profiles-container">
           <p class="muted" style="text-align: center; padding: 2rem;">Chargement des profils...</p>
@@ -228,7 +355,8 @@
       </div>
 
       <!-- Création d'utilisateurs -->
-      <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); margin-bottom: 2rem;">
+      <div class="dashboard-grid"
+        style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); margin-bottom: 2rem;">
         <!-- Création d'admin -->
         <div class="dashboard-card">
           <h3>Créer un Administrateur</h3>
@@ -241,7 +369,8 @@
               <label for="new-admin-password">Mot de passe</label>
               <input type="password" id="new-admin-password" placeholder="••••••••" required minlength="3" />
             </div>
-            <button type="submit" class="primary" style="width: 100%; margin-top: 0.5rem;">Créer l'administrateur</button>
+            <button type="submit" class="primary" style="width: 100%; margin-top: 0.5rem;">Créer
+              l'administrateur</button>
           </form>
           <div id="create-admin-message" style="margin-top: 1rem;"></div>
         </div>
@@ -272,13 +401,50 @@
         </div>
       </div>
     </section>
+
+    <!-- Modal Matching Job -->
+    <div id="match-job-modal" class="modal" hidden>
+      <div class="modal-content">
+        <span class="close-modal" id="close-match-modal">&times;</span>
+        <h3>Smart Job Matching</h3>
+        <p>Upload une fiche de poste (PDF) pour comparer avec le talent.</p>
+
+        <form id="match-job-form">
+          <input type="hidden" id="match-talent-id" />
+          <div class="form-group">
+            <label for="job-pdf" class="file-upload-label">
+              📄 Choisir un fichier PDF
+              <input type="file" id="job-pdf" accept=".pdf" required />
+            </label>
+            <span id="file-name" class="muted">Aucun fichier sélectionné</span>
+          </div>
+          <button type="submit" class="primary" id="btn-analyze-match">🪄 Analyser la compatibilité (IA)</button>
+        </form>
+
+        <div id="match-result" class="match-result-container" hidden>
+          <div class="score-circle">
+            <span id="match-score">0%</span>
+            <small>Compatibilité</small>
+          </div>
+
+          <div class="match-details">
+            <h4>Mots-clés correspondants :</h4>
+            <div id="match-terms" class="tags"></div>
+            <p id="match-advice" class="muted" style="margin-top: 1rem;"></p>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <footer class="footer">
-    <p>Intégration possible au défi national : filtrer par établissement, région ou promotion (à ajouter côté serveur ou base de données).</p>
+    <p>Intégration possible au défi national : filtrer par établissement, région ou promotion (à ajouter côté serveur ou
+      base de données).</p>
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="/CartedesTalents/user_score.js"></script>
   <script src="/CartedesTalents/app.js"></script>
 </body>
+
 </html>
