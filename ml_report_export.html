@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport Technique : Module Intelligence Artificielle</title>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+        }
+
+        @media (max-width: 767px) {
+            .markdown-body {
+                padding: 15px;
+            }
+        }
+
+        @media print {
+            .markdown-body {
+                max-width: none;
+                padding: 20px;
+            }
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+    </style>
+</head>
+
+<body class="markdown-body">
+
+    <div id="raw-markdown" style="display: none;">
+        # Rapport Technique : Module Intelligence Artificielle
+
+        **Projet** : Carte des Talents
+        **Date** : 28 Décembre 2024
+        **Module** : Service de Prédiction & Recommandation (Python/Flask)
+
+        ---
+
+        ## 1. Introduction et Objectifs
+
+        Ce document détaille l'architecture algorithmique du système d'Intelligence Artificielle intégré au projet.
+        L'objectif de ce module est double :
+        1. **Validation Automatique** : Évaluer la qualité et la complétude d'un profil utilisateur (Classification).
+        2. **Smart Matching** : Calculer la pertinence d'un profil vis-à-vis d'une opportunité ou d'une fiche de poste
+        (Système de Recommandation).
+
+        Le système repose sur des techniques de **Traitement Automatique du Langage Naturel (NLP)** et d'**Apprentissage
+        Automatique Supervisé**.
+
+        ---
+
+        ## 2. Architecture du Pipeline ML
+
+        Le pipeline de traitement des données suit une approche classique ETL (Extract, Transform, Load) adaptée au
+        Machine Learning.
+
+        ```mermaid
+        graph LR
+        subgraph "1. Acquisition et Preprocessing"
+        DB[(MongoDB)] -->|Extraction| Raw[Données Brutes]
+        Raw -->|Nettoyage| Clean[Texte Normalisé]
+        Clean -->|Tokenisation| Tokens[Tokens]
+        end
+
+        subgraph "2. Feature Engineering"
+        Tokens -->|TF-IDF| Vectors["Vecteurs (Spare Matrix)"]
+        end
+
+        subgraph "3. Inférence et Modèles"
+        Vectors -->|Random Forest| Class["Classification (Validité)"]
+        Vectors -->|Cosine Sim| Score[Score de Similarité]
+        end
+        ```
+
+        ---
+
+        ## 3. Approches Algorithmiques
+
+        ### 3.1. Vectorisation Textuelle (TF-IDF)
+
+        Pour que les algorithmes puissent traiter les données textuelles (compétences, projets), nous projetons le
+        corpus dans un espace vectoriel de dimension $N$. Nous utilisons la méthode **TF-IDF** (*Term Frequency-Inverse
+        Document Frequency*).
+
+        L'idée est de transformer chaque profil $d$ en un vecteur $V_d$ où chaque dimension correspond à un terme du
+        vocabulaire.
+
+        $$ W_{t,d} = \text{tf}_{t,d} \times \log\left(\frac{N}{\text{df}_t}\right) $$
+
+        * **tf (Term Frequency)** : Fréquence du terme $t$ dans le document $d$.
+        * **idf (Inverse Document Frequency)** : Mesure de l'information apportée par le terme (plus un terme est rare,
+        plus il est discriminant).
+
+        ---
+
+        ### 3.2. Classification Supervisée : Random Forest
+
+        Pour la validation des profils, nous utilisons un **Random Forest Classifier** (Forêts Aléatoires).
+
+        * **Définition** : Il s'agit d'une méthode d'ensemble (*Ensemble Learning*) qui agrège les prédictions de
+        plusieurs Arbres de Décision (*Decision Trees*) entraînés sur des sous-ensembles aléatoires de données
+        (Bagging).
+        * **Avantages** :
+        * Robuste au surapprentissage (*Overfitting*).
+        * Gère bien les données de haute dimension (comme le texte vectorisé).
+        * Fournit une probabilité de classe (confiance).
+
+        **Hyperparamètres Clés** :
+        * `n_estimators = 100` : Le modèle construit 100 arbres indépendants.
+        * `criterion = 'gini'` : L'impureté de Gini est utilisée pour mesurer la qualité des séparations (*splits*).
+
+        ---
+
+        ### 3.3. Système de Recommandation : Similarité Cosinus
+
+        Pour le matching entre un candidat et une offre, nous ne cherchons pas à classer, mais à mesurer une **proximité
+        sémantique**.
+
+        Nous modélisons chaque document (CV et Offre) comme un vecteur dans l'espace vectoriel. La similarité est
+        définie par le cosinus de l'angle $\theta$ entre ces deux vecteurs.
+
+        $$ \text{sim}(A, B) = \cos(\theta) = \frac{\mathbf{A} \cdot \mathbf{B}}{\|\mathbf{A}\| \|\mathbf{B}\|} $$
+
+        * Si $\text{sim} = 1$ (Angle $0^\circ$) : Les documents sont identiques.
+        * Si $\text{sim} = 0$ (Angle $90^\circ$) : Les documents sont orthogonaux (aucun terme commun).
+
+        Cette métrique est particulièrement efficace pour les textes de longueurs variables, car elle ne dépend que de
+        l'orientation des vecteurs et non de leur magnitude (longueur).
+
+        ---
+
+        ## 4. Métriques d'Évaluation
+
+        La performance du modèle de classification est monitorée via une **Matrice de Confusion**.
+
+        | | **Prédit Négatif (0)** | **Prédit Positif (1)** |
+        | :--- | :---: | :---: |
+        | **Réel Négatif (0)** | Vrais Négatifs (TN) | Faux Positifs (FP) |
+        | **Réel Positif (1)** | Faux Négatifs (FN) | Vrais Positifs (TP) |
+
+        À partir de cette matrice, nous calculons :
+        * **Accuracy** : $\frac{TP + TN}{Total}$
+        * **Precision** : $\frac{TP}{TP + FP}$ (Fiabilité des prédictions positives).
+        * **Recall** : $\frac{TP}{TP + FN}$ (Capacité à détecter tous les vrais positifs).
+
+        ---
+
+        ## 5. Conclusion
+
+        Ce système offre une architecture hybride combinant **classification supervisée** pour l'assurance qualité des
+        données et **filtrage basé sur le contenu** pour la fonctionnalité métier de matching. L'utilisation de TF-IDF
+        permet une représentation robuste et interprétable des compétences techniques.
+    </div>
+
+    <div id="content"></div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: false });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const rawMarkdown = document.getElementById('raw-markdown').innerText;
+            const contentDiv = document.getElementById('content');
+
+            // Convert Markdown using marked
+            contentDiv.innerHTML = marked.parse(rawMarkdown);
+
+            // Replace mermaid blocs
+            const codeBlocks = document.querySelectorAll('pre code.language-mermaid');
+            for (const block of codeBlocks) {
+                const pre = block.parentElement;
+                const source = block.textContent;
+                const div = document.createElement('div');
+                div.className = 'mermaid';
+                div.textContent = source;
+                pre.replaceWith(div);
+            }
+
+            // Run mermaid
+            await mermaid.run();
+
+            // Typeset MathJax
+            if (window.MathJax) {
+                await MathJax.typesetPromise();
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -10,6 +10,8 @@
   --danger: #f97373;
 }
 
+@import 'styles_match.css';
+
 * {
   box-sizing: border-box;
 }
@@ -449,7 +451,7 @@ textarea {
   .talent-card-header {
     flex-direction: column;
   }
-  
+
   .verify-btn {
     width: 100%;
   }
@@ -853,11 +855,11 @@ textarea {
   border-radius: 50%;
 }
 
-.toggle-switch input:checked + .toggle-slider {
+.toggle-switch input:checked+.toggle-slider {
   background-color: #22c55e;
 }
 
-.toggle-switch input:checked + .toggle-slider:before {
+.toggle-switch input:checked+.toggle-slider:before {
   transform: translateX(24px);
 }
 
@@ -869,20 +871,20 @@ textarea {
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .admin-profile-header {
     flex-direction: column;
   }
-  
+
   .profile-info-row {
     flex-direction: column;
     gap: 0.25rem;
   }
-  
+
   .profile-info-row strong {
     min-width: auto;
   }
