@@ -315,8 +315,8 @@ function showTalentsForSkill(skill) {
     // Pour les users, afficher "Non vérifié" en rouge, pour les admins afficher le statut approprié
     let verifiedText = '';
     if (currentUser && currentUser.role === 'admin') {
-      verifiedText = t.verified 
-        ? ' · <span style="color: #22c55e; font-weight: 600;">✓ Talent Verified</span>' 
+      verifiedText = t.verified
+        ? ' · <span style="color: #22c55e; font-weight: 600;">✓ Talent Verified</span>'
         : ' · <span style="color: #f97373; font-weight: 600;">✗ Non vérifié</span>';
     } else {
       // Les users ne voient que les non vérifiés, donc toujours afficher "Non vérifié" en rouge
@@ -374,8 +374,8 @@ function onSearch(event) {
     // Pour les users, afficher "Non vérifié" en rouge, pour les admins afficher le statut approprié
     let verifiedText = '';
     if (currentUser && currentUser.role === 'admin') {
-      verifiedText = t.verified 
-        ? ' · <span style="color: #22c55e; font-weight: 600;">✓ Talent Verified</span>' 
+      verifiedText = t.verified
+        ? ' · <span style="color: #22c55e; font-weight: 600;">✓ Talent Verified</span>'
         : ' · <span style="color: #f97373; font-weight: 600;">✗ Non vérifié</span>';
     } else {
       // Les users ne voient que les non vérifiés, donc toujours afficher "Non vérifié" en rouge
@@ -392,6 +392,7 @@ function setupNavigation() {
     profil: document.getElementById('section-profil'),
     carte: document.getElementById('section-carte'),
     collaborateur: document.getElementById('section-collaborateur'),
+    'user-score': document.getElementById('section-user-score'),
     'admin-dashboard': document.getElementById('section-admin-dashboard'),
     'admin-users': document.getElementById('section-admin-users'),
   };
@@ -404,17 +405,17 @@ function setupNavigation() {
           if (s) s.classList.remove('active');
         });
         sections[target].classList.add('active');
-        
+
         // Load dashboard if admin section is opened
         if (target === 'admin-dashboard' && currentUser && currentUser.role === 'admin') {
           loadAdminDashboard();
         }
-        
+
         // Load users if admin users section is opened
         if (target === 'admin-users' && currentUser && currentUser.role === 'admin') {
           loadAdminUsers();
         }
-        
+
         // Load users if admin users section is opened
         if (target === 'admin-users' && currentUser && currentUser.role === 'admin') {
           loadAdminUsers();
@@ -443,20 +444,20 @@ async function checkAuth() {
       credentials: 'include'
     });
     const data = await response.json();
-    
+
     if (!data.authenticated) {
       window.location.href = '/login';
       return null;
     }
-    
+
     currentUser = data.user;
-    
+
     // Display user info
     const userInfoEl = document.getElementById('user-info');
     if (userInfoEl) {
       userInfoEl.textContent = `Connecté en tant que: ${data.user.username}${data.user.role === 'admin' ? ' (Admin)' : ''}`;
     }
-    
+
     // Hide "verified only" checkbox for normal users (they only see unverified)
     if (data.user.role !== 'admin') {
       const verifiedOnlyCheckbox = document.getElementById('search-verified-only');
@@ -465,14 +466,14 @@ async function checkAuth() {
         if (label) label.style.display = 'none';
       }
     }
-    
+
     // Show admin buttons if admin and hide other sections
     if (data.user.role === 'admin') {
       const adminBtn = document.getElementById('admin-nav-btn');
       const adminUsersBtn = document.getElementById('admin-users-nav-btn');
       if (adminBtn) adminBtn.style.display = 'block';
       if (adminUsersBtn) adminUsersBtn.style.display = 'block';
-      
+
       // Hide navigation buttons for admin (only show admin sections)
       const navButtons = document.querySelectorAll('.nav button[data-section]');
       navButtons.forEach(btn => {
@@ -481,7 +482,7 @@ async function checkAuth() {
           btn.style.display = 'none';
         }
       });
-      
+
       // Show only admin dashboard section by default
       const sections = document.querySelectorAll('.section');
       sections.forEach(section => {
@@ -492,7 +493,7 @@ async function checkAuth() {
         adminSection.classList.add('active');
       }
     }
-    
+
     return data.user;
   } catch (error) {
     console.error('Error checking auth:', error);
@@ -519,7 +520,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Check authentication first
   const user = await checkAuth();
   if (!user) return;
-  
+
   await loadTalents();
   setupNavigation();
   setupLivePreview();
@@ -536,13 +537,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   searchForm.addEventListener('submit', onSearch);
 
   buildSkillsCloud();
-  
+
   // Logout button
   const logoutBtnHeader = document.getElementById('logout-btn-header');
   if (logoutBtnHeader) {
     logoutBtnHeader.addEventListener('click', logout);
   }
-  
+
   // Dashboard Admin
   setupAdminDashboard();
 });
@@ -568,7 +569,7 @@ async function setupAdminDashboard() {
       credentials: 'include'
     });
     const data = await response.json();
-    
+
     if (data.authenticated && data.user.role === 'admin') {
       currentUser = data.user;
       document.getElementById('admin-nav-btn').style.display = 'block';
@@ -583,7 +584,8 @@ async function loadAdminDashboard() {
   try {
     await Promise.all([
       loadAdminStats(),
-      loadAdminTalents()
+      loadAdminTalents(),
+      loadMLMetrics()
     ]);
   } catch (error) {
     console.error('Error loading admin dashboard:', error);
@@ -597,13 +599,91 @@ async function loadAdminStats() {
     });
     if (!response.ok) throw new Error('Erreur de chargement');
     const stats = await response.json();
-    
+
     document.getElementById('stat-total-talents').textContent = stats.totalTalents;
     document.getElementById('stat-verified-talents').textContent = stats.verifiedTalents;
     document.getElementById('stat-unverified-talents').textContent = stats.unverifiedTalents;
   } catch (error) {
     console.error('Error loading stats:', error);
   }
+}
+
+async function loadMLMetrics() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/ml-metrics`, {
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        document.getElementById('model-accuracy').textContent = 'N/A';
+        return;
+      }
+      throw new Error('Erreur');
+    }
+
+    const data = await response.json();
+
+    if (data.confusion_matrix) {
+      document.getElementById('cm-tn').textContent = data.confusion_matrix.tn;
+      document.getElementById('cm-fp').textContent = data.confusion_matrix.fp;
+      document.getElementById('cm-fn').textContent = data.confusion_matrix.fn;
+      document.getElementById('cm-tp').textContent = data.confusion_matrix.tp;
+    }
+
+    if (data.accuracy !== undefined) {
+      document.getElementById('model-accuracy').textContent = (data.accuracy * 100).toFixed(1) + '%';
+    }
+
+    if (data.total_samples) {
+      document.getElementById('model-samples').textContent = data.total_samples;
+    }
+
+  } catch (err) {
+    console.error("Error loading ML metrics", err);
+  }
+}
+
+// Bind Visualize Button
+document.addEventListener('DOMContentLoaded', () => {
+  const btnVisualize = document.getElementById('btn-view-matrix');
+  if (btnVisualize) {
+    btnVisualize.addEventListener('click', async () => {
+      const originalText = btnVisualize.textContent;
+      btnVisualize.disabled = true;
+      btnVisualize.textContent = "Ouverture Python...";
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/admin/visualize-matrix`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+
+        if (!response.ok) throw new Error('Erreur lors de l\'ouverture');
+
+        const data = await response.json();
+        console.log(data.message);
+
+      } catch (error) {
+        console.error(error);
+        alert("Erreur: Impossible d'ouvrir la fenêtre Python. Vérifiez que le service ML tourne.");
+      } finally {
+        btnVisualize.disabled = false;
+        btnVisualize.textContent = originalText;
+      }
+    });
+  }
+});
+
+// Bind Open Notebook Button
+const btnOpenNotebook = document.getElementById('btn-open-notebook');
+if (btnOpenNotebook) {
+  btnOpenNotebook.addEventListener('click', () => {
+    // Open Jupyter Notebook in a new tab
+    // Assuming default port 8888 and path relative to where it was started (usually root)
+    // We point to the specific file
+    window.open('http://localhost:8888/notebooks/ml_service/admin_dashboard.ipynb', '_blank');
+  });
 }
 
 
@@ -616,7 +696,7 @@ async function loadAdminTalents() {
     });
     if (!response.ok) throw new Error('Erreur de chargement');
     allAdminTalents = await response.json();
-    
+
     displayAdminProfiles(allAdminTalents);
   } catch (error) {
     console.error('Error loading admin talents:', error);
@@ -630,18 +710,18 @@ async function loadAdminTalents() {
 function displayAdminProfiles(talents) {
   const container = document.getElementById('admin-profiles-list');
   if (!container) return;
-  
+
   if (talents.length === 0) {
     container.innerHTML = '<p class="muted" style="text-align: center; padding: 2rem;">Aucun profil trouvé</p>';
     return;
   }
-  
+
   container.innerHTML = talents.map(talent => {
     const date = new Date(talent.createdAt).toLocaleDateString('fr-FR');
     const skillsText = talent.skills.length > 0 ? talent.skills.join(', ') : 'Aucune';
     const passionsText = talent.passions.length > 0 ? talent.passions.join(', ') : 'Aucune';
     const languagesText = talent.languages.length > 0 ? talent.languages.join(', ') : 'Aucune';
-    
+
     return `
       <div class="admin-profile-card ${talent.verified ? 'verified' : 'unverified'}">
         <div class="admin-profile-header">
@@ -679,14 +759,148 @@ function displayAdminProfiles(talents) {
             <strong>Disponibilité:</strong>
             <span>${getAvailabilityText(talent.availability)}</span>
           </div>
-          <div class="profile-info-row">
+      <div class="profile-info-row">
             <strong>Date de création:</strong>
             <span>${date}</span>
+          </div>
+          
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(148,163,184,0.1);">
+            <button class="btn-match" onclick="openMatchJobModal('${talent._id}')">
+                📄 Comparer avec Fiche de Poste (IA)
+            </button>
           </div>
         </div>
       </div>
     `;
   }).join('');
+}
+
+// === Job Matching Functionality ===
+const matchModal = document.getElementById('match-job-modal');
+const closeMatchModal = document.getElementById('close-match-modal');
+const fileInput = document.getElementById('job-pdf');
+const fileNameDisplay = document.getElementById('file-name');
+const matchForm = document.getElementById('match-job-form');
+
+if (closeMatchModal) {
+  closeMatchModal.onclick = () => {
+    matchModal.hidden = true;
+    resetMatchModal();
+  }
+}
+
+// Close modal when clicking outside
+window.onclick = (event) => {
+  if (event.target == matchModal) {
+    matchModal.hidden = true;
+    resetMatchModal();
+  }
+}
+
+if (fileInput) {
+  fileInput.onchange = function () {
+    if (this.files && this.files.length > 0) {
+      fileNameDisplay.textContent = this.files[0].name;
+      fileNameDisplay.style.color = 'var(--text)';
+    } else {
+      fileNameDisplay.textContent = "Aucun fichier sélectionné";
+      fileNameDisplay.style.color = 'var(--text-muted)';
+    }
+  }
+}
+
+function resetMatchModal() {
+  document.getElementById('match-result').hidden = true;
+  document.getElementById('match-job-form').reset();
+  fileNameDisplay.textContent = "Aucun fichier sélectionné";
+  fileNameDisplay.style.color = 'var(--text-muted)';
+}
+
+function openMatchJobModal(talentId) {
+  document.getElementById('match-talent-id').value = talentId;
+  matchModal.hidden = false;
+}
+window.openMatchJobModal = openMatchJobModal; // Make global
+
+if (matchForm) {
+  matchForm.onsubmit = async (e) => {
+    e.preventDefault();
+
+    const talentId = document.getElementById('match-talent-id').value;
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert("Veuillez sélectionner un fichier PDF.");
+      return;
+    }
+
+    const btn = document.getElementById('btn-analyze-match');
+    const originalText = btn.textContent;
+    btn.textContent = "Analyse en cours...";
+    btn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('jobDescription', file);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/match-job/${talentId}`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || "Erreur lors de l'analyse");
+
+      displayMatchResult(data.matchResult);
+
+    } catch (error) {
+      alert("Erreur: " + error.message);
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  };
+}
+
+function displayMatchResult(result) {
+  const resultContainer = document.getElementById('match-result');
+  const scoreEl = document.getElementById('match-score');
+  const termsContainer = document.getElementById('match-terms');
+  const adviceEl = document.getElementById('match-advice');
+
+  resultContainer.hidden = false;
+
+  // Animate score
+  const percentage = Math.round(result.match_percentage);
+  scoreEl.textContent = `${percentage}%`;
+
+  // Colorize score
+  let color = '#f97373'; // Low
+  if (percentage > 40) color = '#f59e0b'; // Medium
+  if (percentage > 70) color = '#22c55e'; // High
+
+  // Update circle gradient
+  const circle = document.querySelector('.score-circle');
+  circle.style.background = `conic-gradient(${color} ${percentage}%, rgba(15, 23, 42, 0.5) 0%)`;
+
+  // Terms
+  termsContainer.innerHTML = '';
+  if (result.matching_terms && result.matching_terms.length > 0) {
+    result.matching_terms.forEach(term => {
+      const span = document.createElement('span');
+      span.className = 'tag';
+      span.textContent = term;
+      span.style.borderColor = color;
+      span.style.background = `${color}20`; // 20% opacity hex
+      termsContainer.appendChild(span);
+    });
+    adviceEl.textContent = `Ce profil partage ${result.matching_terms.length} mots-clés importants avec la fiche de poste.`;
+  } else {
+    termsContainer.innerHTML = '<span class="muted">Aucun mot-clé direct trouvé.</span>';
+    adviceEl.textContent = "Le vocabulaire utilisé semble très différent.";
+  }
 }
 
 async function toggleVerifyTalent(id, verified) {
@@ -695,7 +909,7 @@ async function toggleVerifyTalent(id, verified) {
       method: 'PATCH',
       credentials: 'include'
     });
-    
+
     if (response.ok) {
       await loadAdminDashboard();
       await loadTalents();
@@ -720,15 +934,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('admin-search');
   const filterSelect = document.getElementById('admin-filter');
   const refreshBtn = document.getElementById('refresh-dashboard');
-  
+
   if (searchInput) {
     searchInput.addEventListener('input', filterAdminProfiles);
   }
-  
+
   if (filterSelect) {
     filterSelect.addEventListener('change', filterAdminProfiles);
   }
-  
+
   if (refreshBtn) {
     refreshBtn.addEventListener('click', () => {
       loadAdminDashboard();
@@ -739,21 +953,21 @@ document.addEventListener('DOMContentLoaded', () => {
 function filterAdminProfiles() {
   const search = document.getElementById('admin-search')?.value.toLowerCase() || '';
   const filter = document.getElementById('admin-filter')?.value || 'all';
-  
+
   let filtered = allAdminTalents.filter(talent => {
-    const matchesSearch = !search || 
+    const matchesSearch = !search ||
       talent.fullName.toLowerCase().includes(search) ||
       (talent.organization && talent.organization.toLowerCase().includes(search)) ||
       talent.skills.some(s => s.toLowerCase().includes(search)) ||
       talent.passions.some(p => p.toLowerCase().includes(search));
-    
+
     const matchesFilter = filter === 'all' ||
       (filter === 'verified' && talent.verified) ||
       (filter === 'unverified' && !talent.verified);
-    
+
     return matchesSearch && matchesFilter;
   });
-  
+
   displayAdminProfiles(filtered);
 }
 
@@ -764,15 +978,15 @@ async function loadAdminUsers() {
     });
     if (!response.ok) throw new Error('Erreur de chargement');
     const users = await response.json();
-    
+
     const container = document.getElementById('admin-users-list');
     if (!container) return;
-    
+
     if (users.length === 0) {
       container.innerHTML = '<p class="muted">Aucun utilisateur</p>';
       return;
     }
-    
+
     container.innerHTML = users.map(user => `
       <div class="user-item">
         <div class="user-info">
@@ -790,21 +1004,21 @@ async function loadAdminUsers() {
 // Create admin
 async function createAdmin(event) {
   event.preventDefault();
-  
+
   const username = document.getElementById('new-admin-username').value.trim();
   const password = document.getElementById('new-admin-password').value;
   const messageEl = document.getElementById('create-admin-message');
-  
+
   if (!username || !password) {
     messageEl.innerHTML = '<p class="error-message">Veuillez remplir tous les champs</p>';
     return;
   }
-  
+
   if (password.length < 3) {
     messageEl.innerHTML = '<p class="error-message">Le mot de passe doit contenir au moins 3 caractères</p>';
     return;
   }
-  
+
   try {
     const response = await fetch(`${API_BASE_URL}/api/admin/create-admin`, {
       method: 'POST',
@@ -814,9 +1028,9 @@ async function createAdmin(event) {
       credentials: 'include',
       body: JSON.stringify({ username, password })
     });
-    
+
     const data = await response.json();
-    
+
     if (response.ok) {
       messageEl.innerHTML = '<p class="success-message">Admin créé avec succès!</p>';
       document.getElementById('create-admin-form').reset();
@@ -835,21 +1049,21 @@ async function createAdmin(event) {
 // Create user
 async function createUser(event) {
   event.preventDefault();
-  
+
   const username = document.getElementById('new-user-username').value.trim();
   const password = document.getElementById('new-user-password').value;
   const messageEl = document.getElementById('create-user-message');
-  
+
   if (!username || !password) {
     messageEl.innerHTML = '<p class="error-message">Veuillez remplir tous les champs</p>';
     return;
   }
-  
+
   if (password.length < 3) {
     messageEl.innerHTML = '<p class="error-message">Le mot de passe doit contenir au moins 3 caractères</p>';
     return;
   }
-  
+
   try {
     const response = await fetch(`${API_BASE_URL}/api/admin/create-user`, {
       method: 'POST',
@@ -859,9 +1073,9 @@ async function createUser(event) {
       credentials: 'include',
       body: JSON.stringify({ username, password })
     });
-    
+
     const data = await response.json();
-    
+
     if (response.ok) {
       messageEl.innerHTML = '<p class="success-message">Utilisateur créé avec succès!</p>';
       document.getElementById('create-user-form').reset();
@@ -883,17 +1097,78 @@ document.addEventListener('DOMContentLoaded', () => {
   if (createAdminForm) {
     createAdminForm.addEventListener('submit', createAdmin);
   }
-  
+
   const createUserForm = document.getElementById('create-user-form');
   if (createUserForm) {
     createUserForm.addEventListener('submit', createUser);
   }
-  
+
   const refreshUsersBtn = document.getElementById('refresh-users');
   if (refreshUsersBtn) {
     refreshUsersBtn.addEventListener('click', () => {
       loadAdminUsers();
     });
+  }
+
+  // --- Global Reference Job Form ---
+  const globalRefForm = document.getElementById('global-reference-form');
+  const globalRefInput = document.getElementById('global-job-pdf');
+  const globalRefName = document.getElementById('global-file-name');
+
+  if (globalRefInput) {
+    globalRefInput.onchange = function () {
+      if (this.files && this.files.length > 0) {
+        globalRefName.textContent = this.files[0].name;
+        globalRefName.style.color = 'var(--text)';
+      } else {
+        globalRefName.textContent = "Aucun fichier choisi";
+        globalRefName.style.color = 'var(--text-muted)';
+      }
+    };
+  }
+
+  if (globalRefForm) {
+    globalRefForm.onsubmit = async (e) => {
+      e.preventDefault();
+
+      const file = globalRefInput.files[0];
+      if (!file) {
+        alert("Veuillez choisir un fichier PDF.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('jobPdf', file);
+
+      const btn = globalRefForm.querySelector('button');
+      const originalText = btn.textContent;
+      btn.textContent = "Upload...";
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/admin/reference-job`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert("Fiche de poste de référence mise à jour avec succès !");
+          globalRefForm.reset();
+          globalRefName.textContent = "Aucun fichier choisi";
+          globalRefName.style.color = 'var(--text-muted)';
+        } else {
+          alert(data.message || "Erreur lors de l'upload");
+        }
+      } catch (error) {
+        alert("Erreur: " + error.message);
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    };
   }
 });
 // ===== FIN FONCTIONS DASHBOARD ADMIN =====

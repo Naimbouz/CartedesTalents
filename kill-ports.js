@@ -6,7 +6,7 @@ async function killPort(port) {
   try {
     const { stdout } = await execPromise(`netstat -ano | findstr :${port} | findstr LISTENING`);
     const lines = stdout.trim().split('\n');
-    
+
     for (const line of lines) {
       const parts = line.trim().split(/\s+/);
       const pid = parts[parts.length - 1];
@@ -26,9 +26,10 @@ async function killPort(port) {
 }
 
 async function killAllPorts() {
-  console.log('Freeing ports 5000 and 3000...');
+  console.log('Freeing ports 5000, 3000, and 5001...');
   await killPort(5000);
   await killPort(3000);
+  await killPort(5001);
   console.log('Done!\n');
 }
 
